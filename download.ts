@@ -252,9 +252,19 @@ export async function download(options: FetchOptions): Promise<string> {
         break;
       }
 
+      // https://github.com/denosaurs/plug/issues/20
+      // download PermissionDenied. make file writable after copy to cache
       case "file:": {
         console.log(`${colors.green("Copying")} ${url}`);
+        /*
+        // Deno.chmod currently throws on Windows
         await Deno.copyFile(fromFileUrl(url), cacheFilePath);
+        await Deno.chmod(cacheFilePath, 0o666);
+        */
+        // portable workaround
+        // note: this is limited by memory size
+        const data = await Deno.readFile(fromFileUrl(url));
+        await Deno.writeFile(cacheFilePath, data);
         break;
       }
 
